@@ -51,4 +51,23 @@ class User < ActiveRecord::Base
 		"user:#{self.id}:#{str}"
 	end
 
+
+	def scored(score)
+		if score > self.high_score
+			$redis.zadd("highscores", score, self.id)
+		end
+	end
+
+	def rank
+		$redis.zrevrank("highscores", self.id) + 1
+	end
+  
+	def high_score
+		$redis.zscore("highscores", self.id).to_i
+	end
+  
+	def self.top_3
+		$redis.zrevrange("highscores", 0, 2).map{|id| User.find(id)}
+	end
+
 end
